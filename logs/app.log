@@ -1,0 +1,14 @@
+{"level":"info","timestamp":"2025-01-23T23:43:07.570+0700","caller":"/home/pebble/Projects/gofood-clone/config/zap.go:51","message":"Logger initialized"}
+{"level":"warn","timestamp":"2025-01-23T23:43:09.203+0700","caller":"/home/pebble/Projects/gofood-clone/service/user_service.go:87","message":"invalid password"}
+{"level":"warn","timestamp":"2025-01-23T23:43:26.800+0700","caller":"/home/pebble/Projects/gofood-clone/service/user_service.go:87","message":"invalid password"}
+{"level":"info","timestamp":"2025-01-23T23:45:19.638+0700","caller":"/home/pebble/Projects/gofood-clone/config/zap.go:51","message":"Logger initialized"}
+{"level":"warn","timestamp":"2025-01-23T23:45:23.386+0700","caller":"/home/pebble/Projects/gofood-clone/service/user_service.go:87","message":"invalid password"}
+{"level":"info","timestamp":"2025-01-23T23:45:42.227+0700","caller":"/home/pebble/Projects/gofood-clone/config/zap.go:51","message":"Logger initialized"}
+{"level":"info","timestamp":"2025-01-23T23:45:48.372+0700","caller":"/home/pebble/Projects/gofood-clone/handler/user_handler.go:74","message":"OK","User logged in":"bagas"}
+{"level":"error","timestamp":"2025-01-23T23:53:01.336+0700","caller":"/home/pebble/Projects/gofood-clone/handler/user_handler.go:79","message":"Method Not Allowed","stacktrace":"github.com/bagasadiii/gofood-clone/handler.(*UserHandler).GetUserHandler\n\t/home/pebble/Projects/gofood-clone/handler/user_handler.go:79\nnet/http.HandlerFunc.ServeHTTP\n\t/usr/lib/go/src/net/http/server.go:2220\ngithub.com/gorilla/mux.(*Router).ServeHTTP\n\t/home/pebble/go/pkg/mod/github.com/gorilla/mux@v1.8.1/mux.go:212\nnet/http.serverHandler.ServeHTTP\n\t/usr/lib/go/src/net/http/server.go:3210\nnet/http.(*conn).serve\n\t/usr/lib/go/src/net/http/server.go:2092"}
+{"level":"info","timestamp":"2025-01-23T23:53:05.650+0700","caller":"/home/pebble/Projects/gofood-clone/repository/user_repository.go:66","message":"User fetched","Username":"bagas"}
+{"level":"info","timestamp":"2025-01-23T23:53:05.650+0700","caller":"/home/pebble/Projects/gofood-clone/handler/user_handler.go:91","message":"User fetched","Username":"bagas"}
+{"level":"info","timestamp":"2025-01-23T23:53:12.462+0700","caller":"/home/pebble/Projects/gofood-clone/repository/user_repository.go:66","message":"User fetched","Username":"bagas"}
+{"level":"info","timestamp":"2025-01-23T23:53:12.462+0700","caller":"/home/pebble/Projects/gofood-clone/handler/user_handler.go:91","message":"User fetched","Username":"bagas"}
+{"level":"info","timestamp":"2025-01-23T23:53:13.580+0700","caller":"/home/pebble/Projects/gofood-clone/repository/user_repository.go:66","message":"User fetched","Username":"bagas"}
+{"level":"info","timestamp":"2025-01-23T23:53:13.580+0700","caller":"/home/pebble/Projects/gofood-clone/handler/user_handler.go:91","message":"User fetched","Username":"bagas"}
