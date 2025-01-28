@@ -40,8 +40,8 @@ func (us *UserService) RegisterService(ctx context.Context, input *model.Registe
 		us.zap.Warn(utils.ErrBadRequest.Error(), zap.String("Invalid username", input.Username))
 		return fmt.Errorf("invalid username:%v", utils.ErrBadRequest)
 	}
-	if err := utils.ValidationErr(input); err != nil {
-		us.zap.Warn(utils.ErrBadRequest.Error(), zap.Any("Request", input))
+	if err := utils.ValidateUser(input); err != nil {
+		us.zap.Error(utils.ErrBadRequest.Error(), zap.Error(err))
 		return fmt.Errorf("%v: %v", utils.ErrBadRequest, err)
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
@@ -79,9 +79,9 @@ func (us *UserService) GetUserService(ctx context.Context, username string) (*mo
 }
 
 func (us *UserService) LoginService(ctx context.Context, input *model.LoginReq) (string, error) {
-	if err := utils.ValidationErr(input); err != nil {
-		us.zap.Error(utils.ErrBadRequest.Error(), zap.String("Invalid request", err.Error()))
-		return "", err
+	if err := utils.ValidateLogin(input); err != nil {
+		us.zap.Error(utils.ErrBadRequest.Error(), zap.Error(err))
+		return "", fmt.Errorf("%v: %v", utils.ErrBadRequest, err)
 	}
 	res, err := us.userRepo.LoginRepo(ctx, input.Username)
 	if err != nil {
@@ -102,4 +102,3 @@ func (us *UserService) LoginService(ctx context.Context, input *model.LoginReq) 
 	}
 	return token, nil
 }
-

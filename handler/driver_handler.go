@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/bagasadiii/gofood-clone/model"
 	"github.com/bagasadiii/gofood-clone/service"
@@ -43,7 +44,12 @@ func (dh *DriverHandler) CreateDriverHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	dh.zap.Info("Driver created", zap.String("name", input.Name))
-	utils.JSONResponse(w, http.StatusCreated, input)
+	utils.JSONResponse(w, http.StatusCreated, map[string]string{
+		"name":    input.Name,
+		"license": input.License,
+		"area":    input.Area,
+		"created": time.Now().String(),
+	})
 }
 
 func (dh *DriverHandler) GetDriverHandler(w http.ResponseWriter, r *http.Request) {

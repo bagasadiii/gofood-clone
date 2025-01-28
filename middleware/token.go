@@ -68,6 +68,10 @@ func (js *JWTService) ValidateToken(tokenString string) (*TokenClaims, error) {
 		return nil, utils.ErrInternal
 	}
 	if claims, ok := token.Claims.(*TokenClaims); ok && token.Valid {
+		if claims.UserID == uuid.Nil || claims.Username == "" || claims.Role == "" {
+			js.zap.Warn("Token missing required claims", zap.Any("claims", claims))
+			return nil, utils.ErrUnauthorized
+		}
 		return claims, nil
 	}
 	return nil, utils.ErrUnauthorized

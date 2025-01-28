@@ -12,7 +12,6 @@ import (
 func InitDB() *pgxpool.Pool {
 	dbUrl := os.Getenv("DATABASELINK")
 	var pool *pgxpool.Pool
-	defer pool.Close()
 	var err error
 	for i := 0; i < 5; i++ {
 		pool, err = pgxpool.New(context.Background(), dbUrl)
@@ -35,4 +34,3 @@ func InitDB() *pgxpool.Pool {
 	}
 	return pool
 }
-

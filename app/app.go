@@ -28,13 +28,14 @@ func (ar *Router) Route() *mux.Router {
 	r.HandleFunc("/api/v1/u/{username}", ar.deps.UserEndpoint.GetUserHandler).Methods("GET")
 
 	r.HandleFunc("/api/v1/m/{username}", ar.deps.MerchantEndpoint.GetMerchantHandler).Methods("GET")
-	r.HandleFunc("/api/v1/m/{username}", ar.deps.DriverEndpoint.GetDriverHandler).Methods("GET")
+	r.HandleFunc("/api/v1/d/{username}", ar.deps.DriverEndpoint.GetDriverHandler).Methods("GET")
 
-	r.Use(ar.deps.Middleware.ValidateContext)
-	r.HandleFunc("/api/v1/m/{username}", ar.deps.MerchantEndpoint.CreateMerchantHandler).Methods("POST")
-	r.HandleFunc("/api/v1/m/{username}", ar.deps.MerchantEndpoint.UpdateMerchantHandler).Methods("PATCH")
+	protected := r.PathPrefix("/api/v1").Subrouter()
+	protected.Use(ar.deps.Middleware.ValidateContext)
+	protected.HandleFunc("/m/{username}", ar.deps.MerchantEndpoint.CreateMerchantHandler).Methods("POST")
+	protected.HandleFunc("/m/{username}", ar.deps.MerchantEndpoint.UpdateMerchantHandler).Methods("PATCH")
 
-	r.HandleFunc("/api/v1/d/{username}", ar.deps.DriverEndpoint.CreateDriverHandler).Methods("POST")
-	r.HandleFunc("/api/v1/d/{username}", ar.deps.DriverEndpoint.UpdateDriverHandler).Methods("PATCH")
+	protected.HandleFunc("/d/{username}", ar.deps.DriverEndpoint.CreateDriverHandler).Methods("POST")
+	protected.HandleFunc("/d/{username}", ar.deps.DriverEndpoint.UpdateDriverHandler).Methods("PATCH")
 	return r
 }

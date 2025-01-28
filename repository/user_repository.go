@@ -39,6 +39,7 @@ func (ur *UserRepo) RegisterUserRepo(ctx context.Context, new *model.User) error
 		return fmt.Errorf("%v", utils.ErrDatabase)
 	}
 	if exists {
+		ur.zap.Warn(utils.ErrUniqueConstraint.Error(), zap.String("username", new.Username))
 		return fmt.Errorf("%v", utils.ErrUniqueConstraint)
 	}
 	_, err = ur.db.Exec(ctx, `INSERT INTO users (user_id, username, email, password, role, created_at, phone, balance, name)
