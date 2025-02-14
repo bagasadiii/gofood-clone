@@ -17,14 +17,14 @@ type UserHandlerImpl interface {
 	GetUserHandler(w http.ResponseWriter, r *http.Request)
 }
 type UserHandler struct {
-	userService service.UserServiceImpl
-	zap         *zap.Logger
+	service service.UserServiceImpl
+	zap     *zap.Logger
 }
 
 func NewUserHandler(service service.UserServiceImpl, zap *zap.Logger) *UserHandler {
 	return &UserHandler{
-		userService: service,
-		zap:         zap,
+		service: service,
+		zap:     zap,
 	}
 }
 
@@ -41,13 +41,19 @@ func (uh *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		utils.JSONResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	if err := uh.userService.RegisterService(r.Context(), &input); err != nil {
+	if err := uh.service.RegisterService(r.Context(), &input); err != nil {
 		status, errIs := utils.ErrCheck(err)
 		utils.JSONResponse(w, status, errIs)
 		return
 	}
-	uh.zap.Info(http.StatusText(http.StatusCreated), zap.String("User registered", input.Username))
-	utils.JSONResponse(w, http.StatusCreated, input)
+	uh.zap.Info(http.StatusText(http.StatusCreated), zap.String("user_registered", input.Username))
+	utils.JSONResponse(w, http.StatusCreated, map[string]string{
+		"username": input.Username,
+		"email":    input.Email,
+		"role":     input.Role,
+		"Phone":    input.Phone,
+		"name":     input.Username,
+	})
 }
 
 func (uh *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +69,7 @@ func (uh *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		utils.JSONResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	token, err := uh.userService.LoginService(r.Context(), &input)
+	token, err := uh.service.LoginService(r.Context(), &input)
 	if err != nil {
 		status, errIs := utils.ErrCheck(err)
 		utils.JSONResponse(w, status, errIs)
@@ -78,14 +84,9 @@ func (uh *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		uh.zap.Error(http.StatusText(http.StatusMethodNotAllowed))
-		utils.JSONResponse(w, http.StatusMethodNotAllowed, nil)
-		return
-	}
 	vars := mux.Vars(r)
 	username := vars["username"]
-	resp, err := uh.userService.GetUserService(r.Context(), username)
+	resp, err := uh.service.GetUserService(r.Context(), username)
 	if err != nil {
 		status, errIs := utils.ErrCheck(err)
 		utils.JSONResponse(w, status, errIs)
@@ -94,4 +95,3 @@ func (uh *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	uh.zap.Info("User fetched", zap.String("Username", username))
 	utils.JSONResponse(w, http.StatusOK, resp)
 }
-

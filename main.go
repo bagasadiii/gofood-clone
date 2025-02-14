@@ -15,6 +15,7 @@ import (
 	"github.com/bagasadiii/gofood-clone/repository"
 	"github.com/bagasadiii/gofood-clone/service"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 )
 
@@ -45,9 +46,16 @@ func main() {
 	}
 
 	app := app.NewRouter(dependencies)
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}).Handler
+
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: app.Route(),
+		Handler: cors(app.Route()),
 	}
 
 	done := make(chan os.Signal, 1)

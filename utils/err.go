@@ -15,6 +15,7 @@ var (
 	ErrBadRequest       = errors.New("bad request")
 	ErrUnauthorized     = errors.New("unauthorized")
 	ErrValidation       = errors.New("validation error")
+	ErrForbidden        = errors.New("forbidden access")
 )
 
 func ErrCheck(err error) (int, error) {
@@ -31,7 +32,10 @@ func ErrCheck(err error) (int, error) {
 		return http.StatusInternalServerError, err
 	case errors.Is(err, ErrBadRequest):
 		return http.StatusBadRequest, err
+	case errors.Is(err, ErrForbidden):
+		return http.StatusForbidden, err
 	default:
 		return http.StatusInternalServerError, errors.New("unexpected error: " + err.Error())
 	}
 }
+

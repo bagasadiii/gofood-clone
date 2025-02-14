@@ -41,14 +41,13 @@ func (mh *MerchantHandler) CreateMerchantHandler(w http.ResponseWriter, r *http.
 		utils.JSONResponse(w, status, errIs)
 		return
 	}
-	resInput := map[string]string{
+	mh.zap.Info("Merchant Created", zap.String("merchant", input.Name))
+	utils.JSONResponse(w, http.StatusOK, map[string]string{
 		"name":        input.Name,
 		"address":     input.Address,
 		"category":    input.Category,
 		"description": input.Description,
-	}
-	utils.JSONResponse(w, http.StatusOK, resInput)
-	mh.zap.Info("Merchant Created", zap.String("merchant", input.Name))
+	})
 }
 
 func (mh *MerchantHandler) GetMerchantHandler(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +76,6 @@ func (mh *MerchantHandler) UpdateMerchantHandler(w http.ResponseWriter, r *http.
 		utils.JSONResponse(w, status, errIs)
 		return
 	}
-	utils.JSONResponse(w, http.StatusOK, &input)
 	mh.zap.Info("Merchant updated", zap.String("merchant", input.Name))
+	utils.JSONResponse(w, http.StatusOK, &input)
 }

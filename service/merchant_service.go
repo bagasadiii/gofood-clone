@@ -33,11 +33,11 @@ func (ms *MerchantService) CreateMerchantService(ctx context.Context, new *model
 	ctxValue, err := utils.CheckContextValue(ctx)
 	if err != nil {
 		ms.zap.Error(utils.ErrUnauthorized.Error(), zap.Error(err))
-		return fmt.Errorf("%v", err)
+		return fmt.Errorf("%w", err)
 	}
 	if ctxValue.Role != "merchant" {
 		ms.zap.Error("invalid role", zap.String("needed", "merchant"), zap.String("actual", ctxValue.Role))
-		return fmt.Errorf("%v: user role %s is not allowed", utils.ErrUnauthorized, ctxValue.Role)
+		return fmt.Errorf("%w: role %s is not allowed", utils.ErrUnauthorized, ctxValue.Role)
 	}
 	newMerchant := model.Merchant{
 		MerchantID:  uuid.New(),
@@ -48,6 +48,10 @@ func (ms *MerchantService) CreateMerchantService(ctx context.Context, new *model
 		Description: new.Description,
 		UserID:      ctxValue.UserID,
 		Owner:       ctxValue.Username,
+	}
+	if err := utils.ValidateMerchant(&newMerchant); err != nil {
+		ms.zap.Error(utils.ErrBadRequest.Error(), zap.Error(err))
+		return fmt.Errorf("%w", err)
 	}
 	return ms.repo.CreateMerchantRepo(ctx, &newMerchant)
 }
@@ -60,11 +64,11 @@ func (ms *MerchantService) UpdateMerchantService(ctx context.Context, update *mo
 	ctxValue, err := utils.CheckContextValue(ctx)
 	if err != nil {
 		ms.zap.Error(utils.ErrUnauthorized.Error(), zap.Error(err))
-		return fmt.Errorf("%v", err)
+		return fmt.Errorf("%w", err)
 	}
 	if ctxValue.Role != "merchant" {
 		ms.zap.Error("invalid role", zap.String("needed", "merchant"), zap.String("actual", ctxValue.Role))
-		return fmt.Errorf("%v: user role %s is not allowed", utils.ErrUnauthorized, ctxValue.Role)
+		return fmt.Errorf("%w: user role %s is not allowed", utils.ErrUnauthorized, ctxValue.Role)
 	}
 	query, args := updateMerchantQueryBuilder(update)
 	return ms.repo.UpdateMerchantRepo(ctx, query, args)

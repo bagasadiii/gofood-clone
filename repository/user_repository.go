@@ -14,9 +14,8 @@ import (
 
 type UserRepoImpl interface {
 	RegisterUserRepo(ctx context.Context, new *model.User) error
-	GetUserRepo(ctx context.Context, id uuid.UUID) (*model.UserResp, error)
-	GetIDRepo(ctx context.Context, username string) (uuid.UUID, error)
 	LoginRepo(ctx context.Context, username string) (*model.User, error)
+	GetUserRepo(ctx context.Context, username string) (*model.UserResp, error)
 }
 type UserRepo struct {
 	db  *pgxpool.Pool
@@ -32,72 +31,68 @@ func NewUserRepo(db *pgxpool.Pool, zap *zap.Logger) *UserRepo {
 
 func (ur *UserRepo) RegisterUserRepo(ctx context.Context, new *model.User) error {
 	var exists bool
-	err := ur.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users WHERE username = $1 OR email = $2)`, new.Username, new.Email).
+	err := ur.db.QueryRow(ctx, `
+    SELECT EXISTS (SELECT 1 FROM users WHERE username = $1 OR email = $2)
+    `, new.Username, new.Email).
 		Scan(&exists)
 	if err != nil {
-		ur.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
-		return fmt.Errorf("%v", utils.ErrDatabase)
+		ur.zap.Error(utils.ErrDatabase.Error(), zap.String("failed to register", new.Username), zap.Error(err))
+		return fmt.Errorf("failed to register user: %w", utils.ErrDatabase)
 	}
 	if exists {
 		ur.zap.Warn(utils.ErrUniqueConstraint.Error(), zap.String("username", new.Username))
-		return fmt.Errorf("%v", utils.ErrUniqueConstraint)
+		return fmt.Errorf("username or email already exist: %w", utils.ErrUniqueConstraint)
 	}
-	_, err = ur.db.Exec(ctx, `INSERT INTO users (user_id, username, email, password, role, created_at, phone, balance, name)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-		new.UserID, new.Username, new.Email, new.Password, new.Role, new.CreatedAt, new.Phone, new.Balance, new.Name)
+	_, err = ur.db.Exec(ctx, `
+    INSERT INTO users (user_id, username, email, password, role, created_at, phone, balance, name)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, new.UserID, new.Username, new.Email, new.Password, new.Role, new.CreatedAt, new.Phone, new.Balance, new.Name)
 	if err != nil {
-		ur.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
+		ur.zap.Error(utils.ErrDatabase.Error(), zap.String("failed to register", new.Username), zap.Error(err))
 		return fmt.Errorf("failed to create user: %w", utils.ErrDatabase)
 	}
 	return nil
 }
 
-func (ur *UserRepo) GetUserRepo(ctx context.Context, id uuid.UUID) (*model.UserResp, error) {
-	resp := &model.UserResp{}
-	row := ur.db.QueryRow(ctx, `SELECT username, email, role, created_at, phone, name FROM users WHERE user_id = $1`, id)
-
-	err := row.Scan(&resp.Username, &resp.Email, &resp.Role, &resp.CreatedAt, &resp.Phone, &resp.Name)
+func (ur *UserRepo) GetUserRepo(ctx context.Context, username string) (*model.UserResp, error) {
+	var userID uuid.UUID
+	var res model.UserResp
+	err := ur.db.QueryRow(ctx, `
+    SELECT user_id FROM users WHERE username = $1
+    `, username).Scan(&userID)
 	if err == pgx.ErrNoRows {
-		ur.zap.Error(utils.ErrNotFound.Error(), zap.String("user_id", id.String()))
-		return nil, fmt.Errorf("no row found: %v", utils.ErrNotFound)
+		ur.zap.Warn(utils.ErrNotFound.Error(), zap.String("username", username))
+		return nil, fmt.Errorf("no row found: %w", utils.ErrNotFound)
 	} else if err != nil {
 		ur.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch user: %w", utils.ErrDatabase)
 	}
 
-	ur.zap.Info("User fetched", zap.String("Username", resp.Username))
-	return resp, nil
-}
-
-func (ur *UserRepo) GetIDRepo(ctx context.Context, username string) (uuid.UUID, error) {
-	var id uuid.UUID
-	err := ur.db.QueryRow(ctx, `SELECT user_id FROM users WHERE username = $1`, username).Scan(&id)
+	err = ur.db.QueryRow(ctx, `
+    SELECT username, email, role, created_at, phone, name FROM users WHERE user_id = $1
+    `, &userID).Scan(&res.Username, &res.Email, &res.Role, &res.CreatedAt, &res.Phone)
 	if err == pgx.ErrNoRows {
-		ur.zap.Warn(utils.ErrNotFound.Error(), zap.String("Username", username))
-		return uuid.Nil, err
+		ur.zap.Warn(utils.ErrNotFound.Error(), zap.String("user_id", userID.String()))
+		return nil, fmt.Errorf("no row found: %w", utils.ErrNotFound)
 	} else if err != nil {
 		ur.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
-		return uuid.Nil, fmt.Errorf("failed to fetch id: %w", utils.ErrDatabase)
+		return nil, fmt.Errorf("failed to fetch user: %w", utils.ErrDatabase)
 	}
-	return id, nil
+
+	return &res, nil
 }
 
 func (ur *UserRepo) LoginRepo(ctx context.Context, username string) (*model.User, error) {
 	var res model.User
-	row := ur.db.QueryRow(ctx, `SELECT user_id, username, password, role FROM users WHERE username = $1`, username)
-	err := row.Scan(
-		&res.UserID,
-		&res.Username,
-		&res.Password,
-		&res.Role,
-	)
+	err := ur.db.QueryRow(ctx, `
+    SELECT user_id, username, password, role FROM users WHERE username = $1
+    `, username).Scan(&res.UserID, &res.Username, &res.Password, &res.Role)
 	if err == pgx.ErrNoRows {
 		ur.zap.Warn(utils.ErrNotFound.Error(), zap.String("Username", username))
-		return nil, err
+		return nil, fmt.Errorf("no username found: %w", utils.ErrNotFound)
 	} else if err != nil {
 		ur.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch user: %w", utils.ErrDatabase)
 	}
 	return &res, nil
 }
-

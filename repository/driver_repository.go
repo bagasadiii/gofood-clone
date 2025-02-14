@@ -35,11 +35,11 @@ func (dr *DriverRepo) CreateDriverRepo(ctx context.Context, new *model.Driver) e
     `, new.DriverID, new.Username).Scan(&exists)
 	if err != nil {
 		dr.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
-		return fmt.Errorf("%v", utils.ErrDatabase)
+		return fmt.Errorf("%w: %w", utils.ErrUnexpected, utils.ErrDatabase)
 	}
 	if exists {
 		dr.zap.Warn(utils.ErrUniqueConstraint.Error(), zap.String("Merchant exists", new.Name))
-		return fmt.Errorf("%v", utils.ErrUniqueConstraint)
+		return fmt.Errorf("driver already exists: %w", utils.ErrUniqueConstraint)
 	}
 
 	_, err = dr.db.Exec(ctx, `
@@ -48,7 +48,7 @@ func (dr *DriverRepo) CreateDriverRepo(ctx context.Context, new *model.Driver) e
     `, new.DriverID, new.Name, new.Rating, new.License, new.Area, new.Income, new.UserID, new.Username)
 	if err != nil {
 		dr.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
-		return fmt.Errorf("%v", utils.ErrDatabase)
+		return fmt.Errorf("failed to create driver: %w", utils.ErrDatabase)
 	}
 	return nil
 }
@@ -62,10 +62,10 @@ func (dr *DriverRepo) GetDriverRepo(ctx context.Context, username string) (*mode
 	err := row.Scan(res.Name, res.Rating, res.Area, res.Income)
 	if err != pgx.ErrNoRows {
 		dr.zap.Warn(utils.ErrNotFound.Error(), zap.String("Username", username))
-		return nil, fmt.Errorf("%v", utils.ErrNotFound)
+		return nil, fmt.Errorf("no driver found: %w", utils.ErrNotFound)
 	} else if err != nil {
 		dr.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
-		return nil, fmt.Errorf("%v", utils.ErrDatabase)
+		return nil, fmt.Errorf("failed to fetch driver info: %w", utils.ErrDatabase)
 	}
 	return &res, nil
 }
@@ -74,7 +74,7 @@ func (dr *DriverRepo) UpdateDriverRepo(ctx context.Context, query string, args [
 	_, err := dr.db.Exec(ctx, fmt.Sprintf(`UPDATE drivers SET %s`, query), args)
 	if err != nil {
 		dr.zap.Error(utils.ErrDatabase.Error(), zap.Error(err))
-		return fmt.Errorf("%v", utils.ErrDatabase)
+		return fmt.Errorf("%w", utils.ErrDatabase)
 	}
 	return nil
 }

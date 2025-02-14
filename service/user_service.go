@@ -21,14 +21,14 @@ type UserServiceImpl interface {
 	LoginService(ctx context.Context, input *model.LoginReq) (string, error)
 }
 type UserService struct {
-	userRepo   repository.UserRepoImpl
+	repo       repository.UserRepoImpl
 	zap        *zap.Logger
 	jwtService middleware.JWTServiceImpl
 }
 
 func NewUserService(repo repository.UserRepoImpl, zap *zap.Logger, jwt middleware.JWTServiceImpl) *UserService {
 	return &UserService{
-		userRepo:   repo,
+		repo:       repo,
 		zap:        zap,
 		jwtService: jwt,
 	}
@@ -38,16 +38,16 @@ func (us *UserService) RegisterService(ctx context.Context, input *model.Registe
 	re := regexp.MustCompile("^[a-z0-9_]+$")
 	if !re.MatchString(input.Username) {
 		us.zap.Warn(utils.ErrBadRequest.Error(), zap.String("Invalid username", input.Username))
-		return fmt.Errorf("invalid username:%v", utils.ErrBadRequest)
+		return fmt.Errorf("invalid username:%w", utils.ErrBadRequest)
 	}
 	if err := utils.ValidateUser(input); err != nil {
 		us.zap.Error(utils.ErrBadRequest.Error(), zap.Error(err))
-		return fmt.Errorf("%v: %v", utils.ErrBadRequest, err)
+		return fmt.Errorf("%w: %w", utils.ErrBadRequest, err)
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		us.zap.Error(utils.ErrInternal.Error(), zap.Error(err))
-		return fmt.Errorf("%v", utils.ErrInternal)
+		return fmt.Errorf("failed to hash password: %w", utils.ErrInternal)
 	}
 	newUser := &model.User{
 		UserID:    uuid.New(),
@@ -60,30 +60,19 @@ func (us *UserService) RegisterService(ctx context.Context, input *model.Registe
 		Balance:   0,
 		Name:      input.Username,
 	}
-	if err := us.userRepo.RegisterUserRepo(ctx, newUser); err != nil {
-		return err
-	}
-	return nil
+	return us.repo.RegisterUserRepo(ctx, newUser)
 }
 
 func (us *UserService) GetUserService(ctx context.Context, username string) (*model.UserResp, error) {
-	id, err := us.userRepo.GetIDRepo(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := us.userRepo.GetUserRepo(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return us.repo.GetUserRepo(ctx, username)
 }
 
 func (us *UserService) LoginService(ctx context.Context, input *model.LoginReq) (string, error) {
 	if err := utils.ValidateLogin(input); err != nil {
 		us.zap.Error(utils.ErrBadRequest.Error(), zap.Error(err))
-		return "", fmt.Errorf("%v: %v", utils.ErrBadRequest, err)
+		return "", fmt.Errorf("%w: %w", utils.ErrBadRequest, err)
 	}
-	res, err := us.userRepo.LoginRepo(ctx, input.Username)
+	res, err := us.repo.LoginRepo(ctx, input.Username)
 	if err != nil {
 		return "", err
 	}

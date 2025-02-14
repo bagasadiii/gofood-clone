@@ -49,6 +49,10 @@ func (ds *DriverService) CreateDriverService(ctx context.Context, new *model.Dri
 		UserID:   ctxValue.UserID,
 		Username: ctxValue.Username,
 	}
+	if err := utils.ValidateDriver(&newDriver); err != nil {
+		ds.zap.Error(utils.ErrBadRequest.Error(), zap.Error(err))
+		return fmt.Errorf("%v", err)
+	}
 	return ds.repo.CreateDriverRepo(ctx, &newDriver)
 }
 
